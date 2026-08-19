@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QR Kod Oluşturucu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root {
+    --bg-top: #EEF0F9; --bg-bottom: #E1E4F2;
+    --card-bg: #FFFFFF; --title-color: #17223D;
+    --subtitle-color: #6C7A94; --blue: #3D74EE; --blue-dark: #2F62D6;
+    --border: #E3E7F3;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh;
+    background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+    font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+    padding: 40px 18px 70px;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; }
+  h1 { font-size: 26px; font-weight: 900; color: var(--title-color); text-align: center; margin: 0 0 8px; }
+  .lead { text-align: center; color: var(--subtitle-color); font-weight: 700; font-size: 14.5px; margin: 0 0 28px; }
+
+  .domain-box {
+    background: var(--card-bg); border-radius: 20px; padding: 20px;
+    box-shadow: 0 20px 40px -18px rgba(23,34,61,0.15); margin-bottom: 28px;
+  }
+  .domain-box label { display: block; font-weight: 800; font-size: 13px; color: var(--title-color); margin-bottom: 8px; }
+  .domain-box input {
+    width: 100%; border: 1.5px solid var(--border); border-radius: 12px; padding: 12px 14px;
+    font-family: 'Nunito', sans-serif; font-size: 14.5px; font-weight: 700; color: var(--title-color); outline: none;
+  }
+  .domain-box input:focus { border-color: var(--blue); }
+  .domain-box .hint { font-size: 12px; color: var(--subtitle-color); font-weight: 600; margin-top: 8px; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 18px; }
+
+  .biz-card {
+    background: var(--card-bg); border-radius: 22px; padding: 24px;
+    box-shadow: 0 20px 40px -18px rgba(23,34,61,0.15);
+    display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px;
+  }
+  .biz-card h2 { font-size: 16px; font-weight: 900; color: var(--title-color); margin: 0; }
+  .biz-card .url { font-size: 11px; color: var(--subtitle-color); font-weight: 600; word-break: break-all; }
+  .qr-box { background: #fff; border-radius: 14px; padding: 10px; border: 1px solid var(--border); }
+  .qr-box canvas, .qr-box img { display: block; }
+  .download-btn {
+    width: 100%; background: linear-gradient(180deg, var(--blue), var(--blue-dark)); color: #fff;
+    border: none; border-radius: 12px; padding: 10px 14px; font-size: 13px; font-weight: 800;
+    cursor: pointer; text-decoration: none; display: inline-block;
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>QR Kod Oluşturucu</h1>
+    <p class="lead">Her işletme için otomatik QR kod üretir. İndirip yazdırıp masalara/vitrine koyabilirsin.</p>
+
+    <div class="domain-box">
+      <label for="baseUrl">Sayfanın gerçek adresi</label>
+      <input type="text" id="baseUrl" value="https://siteniz.com/geri-bildirim.html">
+      <div class="hint">Sitenizi yayınladığınız gerçek adresi buraya yazın (sonuna "?isletme=..." otomatik eklenecek). Değiştirdiğinizde QR kodlar anında güncellenir.</div>
+    </div>
+
+    <div class="grid" id="grid"></div>
+  </div>
+
+<script>
+  /* Bu liste, geri-bildirim.html dosyasındaki BUSINESSES listesiyle
+     AYNI olmalı. Oraya bir işletme eklediğinde buraya da aynısını ekle. */
+  const BUSINESSES = {
+    // Buraya her gerçek işletme için bir satır ekleyin, örnek:
+    // "corba-konagi": { name: "Çorba Konağı" },
+  };
+
+  const baseUrlInput = document.getElementById('baseUrl');
+  const grid = document.getElementById('grid');
+
+  function buildUrl(slug) {
+    const base = baseUrlInput.value.trim().replace(/\/$/, '');
+    return base + '?isletme=' + encodeURIComponent(slug);
+  }
+
+  function renderAll() {
+    grid.innerHTML = '';
+
+    if (Object.keys(BUSINESSES).length === 0) {
+      const empty = document.createElement('div');
+      empty.style.cssText = 'grid-column: 1/-1; text-align:center; color:var(--subtitle-color); font-weight:700; font-size:14px; padding:20px;';
+      empty.textContent = 'Henüz işletme eklenmedi. Kod içindeki BUSINESSES listesine işletmelerinizi ekleyin.';
+      grid.appendChild(empty);
+      return;
+    }
+
+    Object.entries(BUSINESSES).forEach(([slug, biz]) => {
+      const url = buildUrl(slug);
+
+      const card = document.createElement('div');
+      card.className = 'biz-card';
+
+      const title = document.createElement('h2');
+      title.textContent = biz.name;
+
+      const qrBox = document.createElement('div');
+      qrBox.className = 'qr-box';
+
+      const urlText = document.createElement('div');
+      urlText.className = 'url';
+      urlText.textContent = url;
+
+      const downloadBtn = document.createElement('a');
+      downloadBtn.className = 'download-btn';
+      downloadBtn.textContent = 'PNG olarak indir';
+
+      card.appendChild(title);
+      card.appendChild(qrBox);
+      card.appendChild(urlText);
+      card.appendChild(downloadBtn);
+      grid.appendChild(card);
+
+      new QRCode(qrBox, {
+        text: url,
+        width: 200,
+        height: 200,
+        colorDark: "#17223D",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+      });
+
+      setTimeout(() => {
+        const canvas = qrBox.querySelector('canvas');
+        if (canvas) {
+          downloadBtn.href = canvas.toDataURL('image/png');
+          downloadBtn.download = slug + '-qr.png';
+        }
+      }, 50);
+    });
+  }
+
+  baseUrlInput.addEventListener('input', renderAll);
+  renderAll();
+</script>
+</body>
+</html>

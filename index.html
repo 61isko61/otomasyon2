@@ -186,10 +186,17 @@
      formatta bir satır daha ekleyin. "slug" kısmı linkte
      ?isletme=... olarak kullanılacak (Türkçe karakter, boşluk
      kullanmayın: kucuk-harf-ve-tire seklinde yazin).
+
+     telegramChatId: Olumsuz geri bildirimlerin hangi Telegram
+     sohbetine düşeceğini belirler. Nasıl bulunacağı için Claude'a
+     sorulan "Telegram bağlantısı" adımlarına bakın.
      ============================================================ */
+  const TELEGRAM_BOT_TOKEN = "BURAYA_BOTFATHER_TOKEN_YAZIN";
+
   const BUSINESSES = {
     // Buraya her gerçek işletme için bir satır ekleyin, örnek:
-    // "corba-konagi": { name: "Çorba Konağı", googleReviewUrl: "https://g.page/r/.../review" },
+    // "corba-konagi": { name: "Çorba Konağı", googleReviewUrl: "https://g.page/r/.../review", telegramChatId: "123456789" },
+    "corba-konagi": { name: "Çorba Konağı", googleReviewUrl: "https://search.google.com/local/writereview?placeid=ChIJd4E1N1q6yhQRmNcMKGnuXiM", telegramChatId: "" },
   };
 
   const SUBTITLE = "Sizlere daha iyi bir hizmet sunabilmemiz için geri bildirimleriniz bizim için çok değerlidir. Lütfen deneyiminizi paylaşın.";
@@ -263,7 +270,7 @@
         <h2 class="sorry-title">Sizi üzmek istemezdik...</h2>
         <p class="sorry-text">Amacımız her zaman %100 memnuniyet. Yaşadığınız bu aksaklığı <strong>hemen telafi edebilmemiz için</strong> sorunu doğrudan işletme yöneticisine iletebilirsiniz. Seçim sizin:</p>
         <button class="manager-btn" id="managerBtn">${personIcon}<span>YÖNETİCİYE İLET (TELAFİ EDELİM)</span></button>
-        <a class="google-link" href="${business.googleReviewUrl}" target="_blank" rel="noopener">${externalIcon}Hayır, deneyimimi Google'da paylaşacağım</a>
+        <a class="google-link" href="${business.googleReviewUrl}">${externalIcon}Hayır, deneyimimi Google'da paylaşacağım</a>
       </div>
     `, () => {
       document.getElementById('managerBtn').addEventListener('click', renderManagerForm);
@@ -276,10 +283,41 @@
       <p class="subtitle">${SUBTITLE}</p>
       <div class="feedback-form">
         <textarea class="feedback-textarea" id="feedbackText" placeholder="Yaşadığınız sorunu kısaca açıklayınız..."></textarea>
-        <button class="send-btn" id="sendBtn"><span>Geri Bildirimi Gönder</span>${sendIcon}</button>
+        <button class="send-btn" id="sendBtn" disabled><span>Geri Bildirimi Gönder</span>${sendIcon}</button>
       </div>
     `, () => {
-      document.getElementById('sendBtn').addEventListener('click', renderManagerConfirmation);
+      const textarea = document.getElementById('feedbackText');
+      const sendBtn = document.getElementById('sendBtn');
+
+      textarea.addEventListener('input', () => {
+        sendBtn.disabled = textarea.value.trim().length === 0;
+      });
+
+      sendBtn.addEventListener('click', async () => {
+        const message = textarea.value.trim();
+        if (!message) return;
+
+        sendBtn.disabled = true;
+        sendBtn.querySelector('span').textContent = 'Gönderiliyor...';
+
+        const text = `📩 Yeni geri bildirim — ${business.name}\n\n${message}`;
+
+        try {
+          if (business.telegramChatId && TELEGRAM_BOT_TOKEN && !TELEGRAM_BOT_TOKEN.startsWith('BURAYA')) {
+            const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ chat_id: business.telegramChatId, text })
+            });
+            if (!res.ok) throw new Error('Telegram gönderimi başarısız');
+          }
+          renderManagerConfirmation();
+        } catch (err) {
+          sendBtn.disabled = false;
+          sendBtn.querySelector('span').textContent = 'Geri Bildirimi Gönder';
+          alert('Gönderilemedi, lütfen tekrar deneyin.');
+        }
+      });
     });
   }
 

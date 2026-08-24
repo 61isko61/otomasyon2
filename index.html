@@ -16,19 +16,20 @@
     --blue: #3D74EE;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { margin: 0; min-height: 100vh; height: 100%; }
+  html, body { margin: 0; min-height: 100vh; }
   body {
     background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
     font-family: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
     -webkit-font-smoothing: antialiased;
-    display: flex; min-height: 100vh;
+    display: flex; align-items: center; justify-content: center; padding: 40px 18px;
   }
-  .page { width: 100%; display: flex; flex-direction: column; min-height: 100vh; }
+  .page { width: 100%; max-width: 420px; display: flex; flex-direction: column; align-items: center; gap: 22px; }
   .card {
-    width: 100%; flex: 1; background: var(--card-bg); border-radius: 0; box-shadow: none;
-    padding: 56px 26px 34px; text-align: center; display: flex; flex-direction: column; justify-content: center;
+    width: 100%; background: var(--card-bg); border-radius: 30px;
+    box-shadow: 0 30px 60px -20px rgba(23,34,61,0.18), 0 10px 25px -12px rgba(23,34,61,0.08);
+    padding: 46px 26px 34px; text-align: center;
   }
-  .card.dark { justify-content: flex-start; padding-top: 40px; }
+  .card.dark { padding-top: 40px; }
   .card-content { transition: opacity 0.25s ease, transform 0.25s ease; min-height: 60px; }
   .card-content.fade-out { opacity: 0; transform: translateY(6px); }
   h1 { margin: 0 0 18px; font-size: clamp(26px, 7.5vw, 32px); font-weight: 900; color: var(--title-color); letter-spacing: -0.01em; }
@@ -108,6 +109,10 @@
   @media (prefers-reduced-motion: reduce) {
     .card, .card-content { animation: none !important; transition: none !important; }
   }
+  .footer-text {
+    color: var(--footer-color); font-size: 12.5px; font-weight: 700; text-align: center; padding: 0 24px;
+  }
+  .footer-text strong { color: var(--footer-strong); font-weight: 900; }
 
   /* ---------- Detaylı geri bildirim formu (koyu tema) ---------- */
   .card.dark { background: #16181D; }
@@ -181,6 +186,7 @@
     <div class="card">
       <div class="card-content" id="cardContent"></div>
     </div>
+    <p class="footer-text" id="brandFooter">Bu işletme <strong>Rovera</strong> kalite standartları ile analiz edilmektedir.</p>
   </div>
 
 <script>
@@ -244,6 +250,8 @@
         const rating = parseInt(btn.dataset.rating, 10);
         buttons.forEach((b) => b.classList.add(b === btn ? 'selected' : 'dimmed'));
         setTimeout(() => {
+          const footer = document.getElementById('brandFooter');
+          if (footer) footer.style.display = 'none';
           if (rating <= 3) {
             cardContent.parentElement.classList.add('dark');
             renderFormStep1();

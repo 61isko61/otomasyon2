@@ -500,25 +500,26 @@
     btn.disabled = true;
     btn.textContent = 'Gönderiliyor...';
 
-    const stars = (n) => n > 0 ? '★'.repeat(n) + '☆'.repeat(5 - n) : 'Belirtilmedi';
+    const stars = (n) => n > 0 ? '★'.repeat(n) + '☆'.repeat(5 - n) + ` (${n}/5)` : 'Belirtilmedi';
     const lines = [
-      `😟 Detaylı geri bildirim — ${business.name}`,
+      `😟 Yeni Olumsuz Geri Bildirim`,
+      `📍 İşletme: ${business.name}`,
       '',
-      `Genel: ${stars(formData.overall)}`,
-      `Yiyecek: ${stars(formData.food)}`,
-      `Hizmet: ${stars(formData.service)}`,
-      `Atmosfer: ${stars(formData.ambience)}`,
+      `⭐ Genel Puan: ${stars(formData.overall)}`,
+      `🍽️ Yiyecek: ${stars(formData.food)}`,
+      `🛎️ Hizmet: ${stars(formData.service)}`,
+      `🎵 Atmosfer: ${stars(formData.ambience)}`,
       '',
-      formData.comment ? `Yorum: ${formData.comment}` : '',
-      formData.meals.length ? `Ne yediniz: ${formData.meals.join(', ')}` : '',
-      formData.price ? `Kişi başı harcama: ${formData.price}` : '',
-      formData.noise ? `Gürültü: ${formData.noise}` : '',
-      formData.reservation ? `Rezervasyon önerisi: ${formData.reservation}` : '',
-      formData.vejetaryen ? `Vejetaryen seçenekler: ${formData.vejetaryen}` : '',
-      formData.diyet ? `Diyet kısıtlamaları: ${formData.diyet}` : '',
-      formData.otopark ? `Otopark: ${formData.otopark}` : '',
-      formData.cocuk ? `Çocuklara uygunluk: ${formData.cocuk}` : '',
-      formData.tekerlekli ? `Tekerlekli sandalyeye uygunluk: ${formData.tekerlekli}` : ''
+      formData.comment ? `💬 Yorum: ${formData.comment}` : '',
+      formData.meals.length ? `🍴 Ne yediniz: ${formData.meals.join(', ')}` : '',
+      formData.price ? `💰 Kişi başı harcama: ${formData.price}` : '',
+      formData.noise ? `🔊 Gürültü: ${formData.noise}` : '',
+      formData.reservation ? `📅 Rezervasyon önerisi: ${formData.reservation}` : '',
+      formData.vejetaryen ? `🥗 Vejetaryen seçenekler: ${formData.vejetaryen}` : '',
+      formData.diyet ? `🥙 Diyet kısıtlamaları: ${formData.diyet}` : '',
+      formData.otopark ? `🅿️ Otopark: ${formData.otopark}` : '',
+      formData.cocuk ? `🧒 Çocuklara uygunluk: ${formData.cocuk}` : '',
+      formData.tekerlekli ? `♿ Tekerlekli sandalyeye uygunluk: ${formData.tekerlekli}` : ''
     ].filter(Boolean);
 
     const text = lines.join('\n');

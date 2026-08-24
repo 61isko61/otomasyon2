@@ -501,15 +501,17 @@
     btn.textContent = 'Gönderiliyor...';
 
     const stars = (n) => n > 0 ? '★'.repeat(n) + '☆'.repeat(5 - n) + ` (${n}/5)` : 'Belirtilmedi';
-    const lines = [
-      `😟 Yeni Olumsuz Geri Bildirim`,
-      `📍 İşletme: ${business.name}`,
-      '',
+
+    const headerBlock = [`😟 Yeni Olumsuz Geri Bildirim`, `📍 İşletme: ${business.name}`].join('\n');
+
+    const starsBlock = [
       `⭐ Genel Puan: ${stars(formData.overall)}`,
       `🍽️ Yiyecek: ${stars(formData.food)}`,
       `🛎️ Hizmet: ${stars(formData.service)}`,
-      `🎵 Atmosfer: ${stars(formData.ambience)}`,
-      '',
+      `🎵 Atmosfer: ${stars(formData.ambience)}`
+    ].join('\n');
+
+    const detailsBlock = [
       formData.comment ? `💬 Yorum: ${formData.comment}` : '',
       formData.meals.length ? `🍴 Ne yediniz: ${formData.meals.join(', ')}` : '',
       formData.price ? `💰 Kişi başı harcama: ${formData.price}` : '',
@@ -520,9 +522,9 @@
       formData.otopark ? `🅿️ Otopark: ${formData.otopark}` : '',
       formData.cocuk ? `🧒 Çocuklara uygunluk: ${formData.cocuk}` : '',
       formData.tekerlekli ? `♿ Tekerlekli sandalyeye uygunluk: ${formData.tekerlekli}` : ''
-    ].filter(Boolean);
+    ].filter(Boolean).join('\n');
 
-    const text = lines.join('\n');
+    const text = [headerBlock, starsBlock, detailsBlock].filter(Boolean).join('\n\n');
 
     try {
       if (business.telegramChatId) {

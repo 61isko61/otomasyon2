@@ -121,7 +121,7 @@
     <div class="card">
       <div class="card-content" id="cardContent"></div>
     </div>
-    <p class="footer-text">Bu işletme <strong>GooUzman</strong> kalite standartları ile analiz edilmektedir.</p>
+    <p class="footer-text">Bu işletme <strong>Rovera</strong> kalite standartları ile analiz edilmektedir.</p>
   </div>
 
 <script>
@@ -155,11 +155,12 @@
   const externalIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>`;
   const sendIcon = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>`;
 
-  function swapContent(html) {
+  function swapContent(html, after) {
     cardContent.classList.add('fade-out');
     setTimeout(() => {
       cardContent.innerHTML = html;
       cardContent.classList.remove('fade-out');
+      if (after) after();
     }, 250);
   }
 
@@ -203,8 +204,9 @@
         <button class="manager-btn" id="managerBtn">${personIcon}<span>YÖNETİCİYE İLET (TELAFİ EDELİM)</span></button>
         <a class="google-link" href="${business.googleReviewUrl}">${externalIcon}Hayır, deneyimimi Google'da paylaşacağım</a>
       </div>
-    `);
-    document.getElementById('managerBtn').addEventListener('click', renderManagerForm);
+    `, () => {
+      document.getElementById('managerBtn').addEventListener('click', renderManagerForm);
+    });
   }
 
   function renderManagerForm() {
@@ -215,38 +217,39 @@
         <textarea class="feedback-textarea" id="feedbackText" placeholder="Yaşadığınız sorunu kısaca açıklayınız..."></textarea>
         <button class="send-btn" id="sendBtn" disabled><span>Geri Bildirimi Gönder</span>${sendIcon}</button>
       </div>
-    `);
-    const textarea = document.getElementById('feedbackText');
-    const sendBtn = document.getElementById('sendBtn');
+    `, () => {
+      const textarea = document.getElementById('feedbackText');
+      const sendBtn = document.getElementById('sendBtn');
 
-    textarea.addEventListener('input', () => {
-      sendBtn.disabled = textarea.value.trim().length === 0;
-    });
+      textarea.addEventListener('input', () => {
+        sendBtn.disabled = textarea.value.trim().length === 0;
+      });
 
-    sendBtn.addEventListener('click', async () => {
-      const message = textarea.value.trim();
-      if (!message) return;
+      sendBtn.addEventListener('click', async () => {
+        const message = textarea.value.trim();
+        if (!message) return;
 
-      sendBtn.disabled = true;
-      sendBtn.querySelector('span').textContent = 'Gönderiliyor...';
+        sendBtn.disabled = true;
+        sendBtn.querySelector('span').textContent = 'Gönderiliyor...';
 
-      const text = `📩 Yeni geri bildirim — ${business.name}\n\n${message}`;
+        const text = `📩 Yeni geri bildirim — ${business.name}\n\n${message}`;
 
-      try {
-        if (business.telegramChatId) {
-          const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chat_id: business.telegramChatId, text })
-          });
-          if (!res.ok) throw new Error('Gönderim başarısız');
+        try {
+          if (business.telegramChatId) {
+            const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ chat_id: business.telegramChatId, text })
+            });
+            if (!res.ok) throw new Error('Gönderim başarısız');
+          }
+          renderManagerConfirmation();
+        } catch (err) {
+          sendBtn.disabled = false;
+          sendBtn.querySelector('span').textContent = 'Geri Bildirimi Gönder';
+          alert('Gönderilemedi, lütfen tekrar deneyin.');
         }
-        renderManagerConfirmation();
-      } catch (err) {
-        sendBtn.disabled = false;
-        sendBtn.querySelector('span').textContent = 'Geri Bildirimi Gönder';
-        alert('Gönderilemedi, lütfen tekrar deneyin.');
-      }
+      });
     });
   }
 

@@ -58,6 +58,12 @@
   .great.selected .emoji-circle { background: rgba(20,168,134,0.14); --glow: rgba(20,168,134,0.4); }
 
   .status-block { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 220px; gap: 14px; }
+  .check-icon {
+    width: 58px; height: 58px; border-radius: 50%; background: rgba(229,72,77,0.12); color: var(--worst);
+    font-size: 26px; font-weight: 800; display: flex; align-items: center; justify-content: center;
+  }
+  .status-block h2 { margin: 0; color: var(--title-color); font-size: 21px; font-weight: 900; }
+  .status-block p { margin: 0; color: var(--subtitle-color); font-size: 15px; font-weight: 700; max-width: 260px; line-height: 1.55; }
 
   .sorry-block { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-top: 4px; }
   .sorry-emoji { font-size: 44px; margin-bottom: 8px; }
@@ -65,22 +71,39 @@
   .sorry-text { margin: 0 0 26px; font-size: 15px; line-height: 1.65; color: var(--subtitle-color); font-weight: 600; max-width: 320px; }
   .sorry-text strong { color: var(--title-color); font-weight: 800; }
 
-  .google-btn {
+  .manager-btn {
     width: 100%; background: var(--blue); color: #fff; border: none; border-radius: 16px;
-    padding: 16px 18px; font-size: 14px; font-weight: 800; letter-spacing: 0.01em;
+    padding: 16px 18px; font-size: 14px; font-weight: 800; letter-spacing: 0.01em; line-height: 1.35;
     display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer;
-    text-decoration: none; box-shadow: 0 14px 26px -10px rgba(61,116,238,0.55);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 14px 26px -10px rgba(61,116,238,0.55); transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
-  .google-btn:hover { transform: translateY(-2px); box-shadow: 0 18px 30px -10px rgba(61,116,238,0.6); }
-  .google-btn svg { flex-shrink: 0; }
+  .manager-btn:hover { transform: translateY(-2px); box-shadow: 0 18px 30px -10px rgba(61,116,238,0.6); }
+  .manager-btn svg { flex-shrink: 0; }
 
-  .worst .check-icon, .check-icon {
-    width: 58px; height: 58px; border-radius: 50%; background: rgba(229,72,77,0.12); color: var(--worst);
-    font-size: 26px; font-weight: 800; display: flex; align-items: center; justify-content: center;
+  .google-link {
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 18px;
+    color: var(--footer-color); font-size: 12.5px; font-weight: 700; text-decoration: none;
   }
-  .status-block h2 { margin: 0; color: var(--title-color); font-size: 21px; font-weight: 900; }
-  .status-block p { margin: 0; color: var(--subtitle-color); font-size: 15px; font-weight: 700; max-width: 260px; line-height: 1.55; }
+  .google-link:hover { color: var(--footer-strong); }
+  .google-link svg { flex-shrink: 0; }
+
+  .feedback-form { display: flex; flex-direction: column; align-items: stretch; gap: 18px; margin-top: 4px; }
+  .feedback-textarea {
+    width: 100%; min-height: 150px; resize: vertical; border: 1.5px solid #CFE0FB; border-radius: 18px;
+    padding: 16px 18px; font-family: 'Nunito', system-ui, sans-serif; font-size: 15px; font-weight: 600;
+    color: var(--title-color); background: #fff; outline: none; transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .feedback-textarea::placeholder { color: #9AA9C2; font-weight: 600; }
+  .feedback-textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 4px rgba(61,116,238,0.12); }
+  .send-btn {
+    width: 100%; background: var(--blue); color: #fff; border: none; border-radius: 16px;
+    padding: 16px 18px; font-size: 15px; font-weight: 800; display: flex; align-items: center;
+    justify-content: center; gap: 10px; cursor: pointer; box-shadow: 0 14px 26px -10px rgba(61,116,238,0.55);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  }
+  .send-btn:hover { transform: translateY(-2px); box-shadow: 0 18px 30px -10px rgba(61,116,238,0.6); }
+  .send-btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+  .send-btn svg { flex-shrink: 0; }
 
   .footer-text {
     color: var(--footer-color); font-size: 12.5px; font-weight: 700; text-align: center; padding: 0 24px;
@@ -111,10 +134,14 @@
   const BUSINESSES = {
     "corba-konagi": {
       name: "Çorba Konağı",
-      googleReviewUrl: "https://search.google.com/local/writereview?placeid=ChIJd4E1N1q6yhQRmNcMKGnuXiM"
+      googleReviewUrl: "https://search.google.com/local/writereview?placeid=ChIJd4E1N1q6yhQRmNcMKGnuXiM",
+      telegramChatId: "6158240799"
     },
-    // "yeni-isletme-slug": { name: "Yeni İşletme Adı", googleReviewUrl: "https://..." },
+    // "yeni-isletme-slug": { name: "Yeni İşletme Adı", googleReviewUrl: "https://...", telegramChatId: "123456789" },
   };
+
+  /* Telegram botunun token'ı — BotFather'dan alınan token. */
+  const TELEGRAM_BOT_TOKEN = "8738998911:AAHB_OGYOfw4ewVSX1u1WL1JXT6Gcu0bq88";
 
   const SUBTITLE = "Sizlere daha iyi bir hizmet sunabilmemiz için geri bildirimleriniz bizim için çok değerlidir. Lütfen deneyiminizi paylaşın.";
 
@@ -124,7 +151,9 @@
   const cardContent = document.getElementById('cardContent');
   let locked = false;
 
+  const personIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21v-1a7 7 0 0 1 7-7h2a7 7 0 0 1 7 7v1"></path></svg>`;
   const externalIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>`;
+  const sendIcon = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>`;
 
   function swapContent(html) {
     cardContent.classList.add('fade-out');
@@ -170,8 +199,63 @@
       <div class="sorry-block">
         <div class="sorry-emoji">😔</div>
         <h2 class="sorry-title">Sizi üzmek istemezdik...</h2>
-        <p class="sorry-text">Amacımız her zaman %100 memnuniyet. Geri bildiriminizi dikkate alacağız, bir dahaki sefere sizi daha iyi ağırlamak için elimizden geleni yapacağız.</p>
-        <a class="google-btn" href="${business.googleReviewUrl}">${externalIcon}Yine de Google'da paylaşmak istiyorum</a>
+        <p class="sorry-text">Amacımız her zaman %100 memnuniyet. Yaşadığınız bu aksaklığı <strong>hemen telafi edebilmemiz için</strong> sorunu doğrudan işletme yöneticisine iletebilirsiniz. Seçim sizin:</p>
+        <button class="manager-btn" id="managerBtn">${personIcon}<span>YÖNETİCİYE İLET (TELAFİ EDELİM)</span></button>
+        <a class="google-link" href="${business.googleReviewUrl}">${externalIcon}Hayır, deneyimimi Google'da paylaşacağım</a>
+      </div>
+    `);
+    document.getElementById('managerBtn').addEventListener('click', renderManagerForm);
+  }
+
+  function renderManagerForm() {
+    swapContent(`
+      <h1>${business.name}</h1>
+      <p class="subtitle">${SUBTITLE}</p>
+      <div class="feedback-form">
+        <textarea class="feedback-textarea" id="feedbackText" placeholder="Yaşadığınız sorunu kısaca açıklayınız..."></textarea>
+        <button class="send-btn" id="sendBtn" disabled><span>Geri Bildirimi Gönder</span>${sendIcon}</button>
+      </div>
+    `);
+    const textarea = document.getElementById('feedbackText');
+    const sendBtn = document.getElementById('sendBtn');
+
+    textarea.addEventListener('input', () => {
+      sendBtn.disabled = textarea.value.trim().length === 0;
+    });
+
+    sendBtn.addEventListener('click', async () => {
+      const message = textarea.value.trim();
+      if (!message) return;
+
+      sendBtn.disabled = true;
+      sendBtn.querySelector('span').textContent = 'Gönderiliyor...';
+
+      const text = `📩 Yeni geri bildirim — ${business.name}\n\n${message}`;
+
+      try {
+        if (business.telegramChatId) {
+          const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: business.telegramChatId, text })
+          });
+          if (!res.ok) throw new Error('Gönderim başarısız');
+        }
+        renderManagerConfirmation();
+      } catch (err) {
+        sendBtn.disabled = false;
+        sendBtn.querySelector('span').textContent = 'Geri Bildirimi Gönder';
+        alert('Gönderilemedi, lütfen tekrar deneyin.');
+      }
+    });
+  }
+
+  function renderManagerConfirmation() {
+    swapContent(`
+      <div class="status-block">
+        <div class="check-icon" style="background: rgba(61,116,238,0.12); color: var(--blue);">&#10003;</div>
+        <h2>İletildi!</h2>
+        <p>Talebiniz işletme yöneticisine ulaştı. En kısa sürede sizinle iletişime geçilecek.</p>
       </div>
     `);
   }

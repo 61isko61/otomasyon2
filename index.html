@@ -186,6 +186,11 @@
     padding: 14px 26px calc(14px + env(safe-area-inset-bottom)); z-index: 20;
   }
   .df-scroll-area { padding-bottom: 90px; }
+  .df-back-btn {
+    background: none; border: none; color: #9AA0AC; font-size: 13.5px; font-weight: 700;
+    cursor: pointer; padding: 0; margin-bottom: 18px; font-family: 'Nunito', sans-serif;
+  }
+  .df-back-btn:hover { color: #D6D8DE; }
 </style>
 </head>
 <body>
@@ -354,6 +359,7 @@
 
     cardContent.innerHTML = `
       <div class="df-scroll-area">
+        <button class="df-back-btn" id="dfBack" type="button">← Vazgeç</button>
         <h2 class="dark-title">${business.name}</h2>
         <p class="dark-note">Bu bilgiler herkese açık değildir — doğrudan ve özel olarak işletme yönetimine iletilecektir.</p>
 
@@ -432,9 +438,18 @@
     `;
 
     document.getElementById('dfStickyBar').style.display = 'block';
-    document.getElementById('dfStickyBar').innerHTML = `<button class="df-btn-primary" id="dfSubmit" style="width:100%">Gönder</button>`;
+    document.getElementById('dfStickyBar').innerHTML = `
+      <button class="df-btn-primary" id="dfSubmit" style="width:100%" disabled>Gönder</button>
+    `;
+
+    document.getElementById('dfBack').addEventListener('click', resetToRating);
 
     wireStars(cardContent);
+    cardContent.querySelectorAll('.star-row[data-key="overall"] .star').forEach((s) => {
+      s.addEventListener('click', () => {
+        document.getElementById('dfSubmit').disabled = formData.overall === 0;
+      });
+    });
     wireChipGroup(cardContent, '#dfMeals .chip', 'meals', true);
     wireChipGroup(cardContent, '#dfPrice .chip', 'price', false);
     wireChipGroup(cardContent, '#dfNoise .chip', 'noise', false);
@@ -463,7 +478,24 @@
     document.getElementById('dfSubmit').addEventListener('click', submitDetailedForm);
   }
 
+  function resetToRating() {
+    formData.overall = 0; formData.food = 0; formData.service = 0; formData.ambience = 0;
+    formData.comment = ''; formData.photoFile = null;
+    formData.meals = []; formData.price = ''; formData.noise = ''; formData.reservation = '';
+    formData.vejetaryen = ''; formData.diyet = ''; formData.otopark = ''; formData.cocuk = ''; formData.tekerlekli = '';
+
+    cardContent.parentElement.classList.remove('dark');
+    document.body.classList.remove('fullbleed');
+    document.getElementById('dfStickyBar').style.display = 'none';
+    const footer = document.getElementById('brandFooter');
+    if (footer) footer.style.display = '';
+    locked = false;
+    renderRating();
+  }
+
   async function submitDetailedForm() {
+    if (formData.overall === 0) return;
+
     const btn = document.getElementById('dfSubmit');
     btn.disabled = true;
     btn.textContent = 'Gönderiliyor...';
@@ -493,21 +525,29 @@
 
     try {
       if (business.telegramChatId) {
+        // Fotoğraf varsa ayrı, kısa bir başlıkla gönderilir — Telegram'ın
+        // fotoğraf altyazısı 1024 karakterle sınırlı olduğu için, tüm
+        // detaylar HER ZAMAN ayrı bir metin mesajıyla da gönderilir.
+        // Böylece uzun bir form dolu olsa bile hiçbir bilgi kaybolmaz.
         if (formData.photoFile) {
-          const fd = new FormData();
-          fd.append('chat_id', business.telegramChatId);
-          fd.append('caption', text);
-          fd.append('photo', formData.photoFile);
-          const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`, { method: 'POST', body: fd });
-          if (!res.ok) throw new Error('Gönderim başarısız');
-        } else {
-          const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chat_id: business.telegramChatId, text })
-          });
-          if (!res.ok) throw new Error('Gönderim başarısız');
+          try {
+            const fd = new FormData();
+            fd.append('chat_id', business.telegramChatId);
+            fd.append('caption', `📷 ${business.name} — eklenen fotoğraf`);
+            fd.append('photo', formData.photoFile);
+            await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`, { method: 'POST', body: fd });
+          } catch (photoErr) {
+            // Fotoğraf gönderimi başarısız olsa bile asıl geri bildirim
+            // metni aşağıda ayrıca gönderileceği için akış durmaz.
+          }
         }
+
+        const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: business.telegramChatId, text })
+        });
+        if (!res.ok) throw new Error('Gönderim başarısız');
       }
       renderManagerConfirmation();
     } catch (err) {

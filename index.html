@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Geri Bildirim</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-top: #EEF0F9; --bg-bottom: #E1E4F2;
+    --card-bg: #FFFFFF; --title-color: #17223D;
+    --subtitle-color: #6C7A94; --footer-color: #9AA3B5; --footer-strong: #5C6B82;
+    --worst: #E5484D; --bad: #F2954B; --avg: #C6A020; --good: #3FAE5C; --great: #14A886;
+    --blue: #3D74EE;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; min-height: 100vh; }
+  body {
+    background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+    font-family: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    display: flex; align-items: center; justify-content: center; padding: 40px 18px;
+  }
+  .page { width: 100%; max-width: 420px; display: flex; flex-direction: column; align-items: center; gap: 22px; }
+  .card {
+    width: 100%; background: var(--card-bg); border-radius: 30px;
+    box-shadow: 0 30px 60px -20px rgba(23,34,61,0.18), 0 10px 25px -12px rgba(23,34,61,0.08);
+    padding: 46px 26px 34px; text-align: center; animation: riseIn 0.6s cubic-bezier(.22,1,.36,1) both;
+  }
+  .card-content { transition: opacity 0.25s ease, transform 0.25s ease; min-height: 60px; }
+  .card-content.fade-out { opacity: 0; transform: translateY(6px); }
+  h1 { margin: 0 0 18px; font-size: clamp(26px, 7.5vw, 32px); font-weight: 900; color: var(--title-color); letter-spacing: -0.01em; }
+  .subtitle { margin: 0 0 36px; color: var(--subtitle-color); font-size: 15.5px; line-height: 1.6; font-weight: 700; }
+
+  .emoji-row { display: flex; justify-content: space-between; gap: 4px; }
+  .emoji-btn {
+    background: none; border: none; cursor: pointer; display: flex; flex-direction: column;
+    align-items: center; gap: 9px; padding: 6px 2px; flex: 1; border-radius: 16px;
+    transition: transform 0.3s cubic-bezier(.34,1.56,.64,1), opacity 0.3s ease;
+  }
+  .emoji-btn:hover { transform: translateY(-4px); }
+  .emoji-btn.selected { transform: scale(1.18); }
+  .emoji-btn.dimmed { opacity: 0.28; transform: scale(0.9); }
+  .emoji-circle {
+    width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 29px; line-height: 1; background: transparent; transition: background 0.3s ease, box-shadow 0.3s ease;
+  }
+  .emoji-btn.selected .emoji-circle { box-shadow: 0 10px 22px -6px var(--glow, rgba(0,0,0,0.25)); }
+  .label { font-size: 10.5px; font-weight: 800; letter-spacing: 0.02em; }
+  .worst .label { color: var(--worst); } .bad .label { color: var(--bad); } .avg .label { color: var(--avg); }
+  .good .label { color: var(--good); } .great .label { color: var(--great); }
+  .worst.selected .emoji-circle { background: rgba(229,72,77,0.12); --glow: rgba(229,72,77,0.4); }
+  .bad.selected .emoji-circle   { background: rgba(242,149,75,0.14); --glow: rgba(242,149,75,0.4); }
+  .avg.selected .emoji-circle   { background: rgba(198,160,32,0.14); --glow: rgba(198,160,32,0.4); }
+  .good.selected .emoji-circle  { background: rgba(63,174,92,0.14); --glow: rgba(63,174,92,0.4); }
+  .great.selected .emoji-circle { background: rgba(20,168,134,0.14); --glow: rgba(20,168,134,0.4); }
+
+  .status-block { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 220px; gap: 14px; }
+  .check-icon {
+    width: 58px; height: 58px; border-radius: 50%; background: rgba(229,72,77,0.12); color: var(--worst);
+    font-size: 26px; font-weight: 800; display: flex; align-items: center; justify-content: center;
+  }
+  .status-block h2 { margin: 0; color: var(--title-color); font-size: 21px; font-weight: 900; }
+  .status-block p { margin: 0; color: var(--subtitle-color); font-size: 15px; font-weight: 700; max-width: 260px; line-height: 1.55; }
+
+  .sorry-block { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-top: 4px; }
+  .sorry-emoji { font-size: 44px; margin-bottom: 8px; }
+  .sorry-title { margin: 0 0 14px; font-size: 21px; font-weight: 900; color: var(--title-color); }
+  .sorry-text { margin: 0 0 26px; font-size: 15px; line-height: 1.65; color: var(--subtitle-color); font-weight: 600; max-width: 320px; }
+  .sorry-text strong { color: var(--title-color); font-weight: 800; }
+
+  .manager-btn {
+    width: 100%; background: var(--blue); color: #fff; border: none; border-radius: 16px;
+    padding: 16px 18px; font-size: 14px; font-weight: 800; letter-spacing: 0.01em; line-height: 1.35;
+    display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer;
+    box-shadow: 0 14px 26px -10px rgba(61,116,238,0.55); transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .manager-btn:hover { transform: translateY(-2px); box-shadow: 0 18px 30px -10px rgba(61,116,238,0.6); }
+  .manager-btn svg { flex-shrink: 0; }
+
+  .google-link {
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 18px;
+    color: var(--footer-color); font-size: 12.5px; font-weight: 700; text-decoration: none;
+  }
+  .google-link:hover { color: var(--footer-strong); }
+  .google-link svg { flex-shrink: 0; }
+
+  .feedback-form { display: flex; flex-direction: column; align-items: stretch; gap: 18px; margin-top: 4px; }
+  .feedback-textarea {
+    width: 100%; min-height: 150px; resize: vertical; border: 1.5px solid #CFE0FB; border-radius: 18px;
+    padding: 16px 18px; font-family: 'Nunito', system-ui, sans-serif; font-size: 15px; font-weight: 600;
+    color: var(--title-color); background: #fff; outline: none; transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .feedback-textarea::placeholder { color: #9AA9C2; font-weight: 600; }
+  .feedback-textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 4px rgba(61,116,238,0.12); }
+  .send-btn {
+    width: 100%; background: var(--blue); color: #fff; border: none; border-radius: 16px;
+    padding: 16px 18px; font-size: 15px; font-weight: 800; display: flex; align-items: center;
+    justify-content: center; gap: 10px; cursor: pointer; box-shadow: 0 14px 26px -10px rgba(61,116,238,0.55);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  }
+  .send-btn:hover { transform: translateY(-2px); box-shadow: 0 18px 30px -10px rgba(61,116,238,0.6); }
+  .send-btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+  .send-btn svg { flex-shrink: 0; }
+
+  .footer-text {
+    color: var(--footer-color); font-size: 12.5px; font-weight: 700; text-align: center; padding: 0 24px;
+    animation: riseIn 0.6s cubic-bezier(.22,1,.36,1) 0.1s both;
+  }
+  .footer-text strong { color: var(--footer-strong); font-weight: 900; }
+  @keyframes riseIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+  @media (prefers-reduced-motion: reduce) {
+    .card, .footer-text, .emoji-btn, .card-content { animation: none !important; transition: none !important; }
+  }
+
+  /* ---------- Detaylı geri bildirim formu (koyu tema) ---------- */
+  .card.dark { background: #16181D; }
+  .dark-title { color: #fff; font-size: 20px; font-weight: 800; margin: 0 0 6px; text-align: left; }
+  .dark-note { color: #9AA0AC; font-size: 12.5px; font-weight: 600; margin: 0 0 26px; text-align: left; line-height: 1.5; }
+
+  .df-section { text-align: left; margin-bottom: 26px; }
+  .df-label { color: #E4E6EB; font-size: 14.5px; font-weight: 700; margin: 0 0 12px; }
+
+  .star-row { display: flex; gap: 8px; }
+  .star-row.big .star { font-size: 30px; }
+  .star { font-size: 24px; color: #4B4F58; cursor: pointer; transition: color 0.15s ease, transform 0.15s ease; line-height: 1; }
+  .star:hover { transform: scale(1.1); }
+  .star.filled { color: #F2B60D; }
+  .df-subrow { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .df-subrow .df-sublabel { color: #C7CAD1; font-size: 14px; font-weight: 700; }
+
+  .df-textarea {
+    width: 100%; min-height: 100px; resize: vertical; border: 1.5px solid #34363D; border-radius: 14px;
+    padding: 14px 16px; font-family: 'Nunito', sans-serif; font-size: 14.5px; font-weight: 600;
+    color: #fff; background: #1F2127; outline: none; transition: border-color 0.2s ease;
+  }
+  .df-textarea::placeholder { color: #6B6F79; font-weight: 600; }
+  .df-textarea:focus { border-color: var(--blue); }
+
+  .df-photo-btn {
+    width: 100%; margin-top: 14px; background: #24262D; border: none; border-radius: 100px;
+    padding: 13px 18px; color: #D6D8DE; font-size: 14px; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .df-photo-preview { margin-top: 12px; border-radius: 12px; max-width: 100%; max-height: 160px; display: block; }
+
+  .chip-group { display: flex; flex-wrap: wrap; gap: 10px; }
+  .chip {
+    background: none; border: 1.5px solid #3A3D45; color: #D6D8DE; border-radius: 100px;
+    padding: 10px 16px; font-size: 13.5px; font-weight: 700; cursor: pointer;
+    font-family: 'Nunito', sans-serif; transition: all 0.15s ease;
+  }
+  .chip.selected { background: rgba(61,116,238,0.16); border-color: var(--blue); color: #9DB8FA; }
+
+  .df-accordion { border-top: 1px solid #2B2D33; }
+  .df-acc-item { border-bottom: 1px solid #2B2D33; }
+  .df-acc-head {
+    width: 100%; background: none; border: none; padding: 16px 0; display: flex;
+    align-items: center; justify-content: space-between; color: #E4E6EB; font-size: 14.5px;
+    font-weight: 700; cursor: pointer; font-family: 'Nunito', sans-serif; text-align: left;
+  }
+  .df-acc-chevron { transition: transform 0.2s ease; color: #9AA0AC; flex-shrink: 0; }
+  .df-acc-item.open .df-acc-chevron { transform: rotate(180deg); }
+  .df-acc-body { max-height: 0; overflow: hidden; transition: max-height 0.25s ease; }
+  .df-acc-item.open .df-acc-body { max-height: 200px; padding-bottom: 16px; }
+
+  .df-nav { display: flex; gap: 12px; margin-top: 8px; }
+  .df-btn-secondary {
+    flex: 1; background: none; border: 1.5px solid #3A3D45; color: #D6D8DE; border-radius: 100px;
+    padding: 14px 18px; font-size: 14.5px; font-weight: 800; cursor: pointer; font-family: 'Nunito', sans-serif;
+  }
+  .df-btn-primary {
+    flex: 2; background: var(--blue); border: none; color: #fff; border-radius: 100px;
+    padding: 14px 18px; font-size: 14.5px; font-weight: 800; cursor: pointer; font-family: 'Nunito', sans-serif;
+    transition: opacity 0.2s ease;
+  }
+  .df-btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+  .df-steps { display: flex; gap: 6px; justify-content: center; margin-bottom: 22px; }
+  .df-step-dot { width: 8px; height: 8px; border-radius: 50%; background: #3A3D45; }
+  .df-step-dot.active { background: var(--blue); }
+</style>
+</head>
+<body>
+  <div class="page">
+    <div class="card">
+      <div class="card-content" id="cardContent"></div>
+    </div>
+    <p class="footer-text">Bu işletme <strong>GooUzman</strong> kalite standartları ile analiz edilmektedir.</p>
+  </div>
+
+<script>
+  /* ============================================================
+     İŞLETME LİSTESİ — Yeni bir işletme eklemek için buraya aynı
+     formatta bir satır daha ekleyin. "slug" kısmı linkte
+     ?isletme=... olarak kullanılacak (Türkçe karakter, boşluk
+     kullanmayın: kucuk-harf-ve-tire seklinde yazin).
+     ============================================================ */
+  const BUSINESSES = {
+    "corba-konagi": {
+      name: "Çorba Konağı",
+      googleReviewUrl: "https://search.google.com/local/writereview?placeid=ChIJd4E1N1q6yhQRmNcMKGnuXiM",
+      telegramChatId: "6158240799"
+    },
+    // "yeni-isletme-slug": { name: "Yeni İşletme Adı", googleReviewUrl: "https://...", telegramChatId: "123456789" },
+  };
+
+  /* Telegram botunun token'ı — BotFather'dan alınan token. */
+  const TELEGRAM_BOT_TOKEN = "8738998911:AAHB_OGYOfw4ewVSX1u1WL1JXT6Gcu0bq88";
+
+  const SUBTITLE = "Sizlere daha iyi bir hizmet sunabilmemiz için geri bildirimleriniz bizim için çok değerlidir. Lütfen deneyiminizi paylaşın.";
+
+  const slug = new URLSearchParams(window.location.search).get('isletme');
+  const business = BUSINESSES[slug];
+
+  const cardContent = document.getElementById('cardContent');
+  let locked = false;
+
+  const personIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21v-1a7 7 0 0 1 7-7h2a7 7 0 0 1 7 7v1"></path></svg>`;
+  const externalIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>`;
+  const sendIcon = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>`;
+
+  function swapContent(html, after) {
+    cardContent.classList.add('fade-out');
+    setTimeout(() => {
+      cardContent.innerHTML = html;
+      cardContent.classList.remove('fade-out');
+      if (after) after();
+    }, 250);
+  }
+
+  function renderRating() {
+    document.title = business.name + " — Geri Bildirim";
+    cardContent.innerHTML = `
+      <h1>${business.name}</h1>
+      <p class="subtitle">${SUBTITLE}</p>
+      <div class="emoji-row">
+        <button class="emoji-btn worst" data-rating="1" aria-label="Çok kötü"><span class="emoji-circle">😠</span><span class="label">ÇOK KÖTÜ</span></button>
+        <button class="emoji-btn bad" data-rating="2" aria-label="Kötü"><span class="emoji-circle">😐</span><span class="label">KÖTÜ</span></button>
+        <button class="emoji-btn avg" data-rating="3" aria-label="Ortalama"><span class="emoji-circle">🙂</span><span class="label">ORTALAMA</span></button>
+        <button class="emoji-btn good" data-rating="4" aria-label="İyi"><span class="emoji-circle">😊</span><span class="label">İYİ</span></button>
+        <button class="emoji-btn great" data-rating="5" aria-label="Harika"><span class="emoji-circle">🤩</span><span class="label">HARİKA</span></button>
+      </div>
+    `;
+    const buttons = cardContent.querySelectorAll('.emoji-btn');
+    buttons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        if (locked) return;
+        locked = true;
+        const rating = parseInt(btn.dataset.rating, 10);
+        buttons.forEach((b) => b.classList.add(b === btn ? 'selected' : 'dimmed'));
+        setTimeout(() => {
+          if (rating <= 3) {
+            cardContent.parentElement.classList.add('dark');
+            renderFormStep1();
+          } else {
+            window.location.href = business.googleReviewUrl;
+          }
+        }, 550);
+      });
+    });
+  }
+
+  /* ============================================================
+     DETAYLI GERİ BİLDİRİM FORMU — Google yorum formuna benzer,
+     3 adımlı. Tüm cevaplar tek bir mesajda Telegram'a gönderilir.
+     ============================================================ */
+  const formData = {
+    overall: 0, food: 0, service: 0, ambience: 0,
+    comment: '', photoFile: null,
+    meals: [], price: '', noise: '', reservation: '',
+    vejetaryen: '', diyet: '', otopark: '', cocuk: '', tekerlekli: ''
+  };
+
+  function starRow(key, big) {
+    let html = `<div class="star-row${big ? ' big' : ''}" data-key="${key}">`;
+    for (let i = 1; i <= 5; i++) {
+      html += `<span class="star" data-value="${i}">★</span>`;
+    }
+    html += `</div>`;
+    return html;
+  }
+
+  function wireStars(container) {
+    container.querySelectorAll('.star-row').forEach((row) => {
+      const key = row.dataset.key;
+      const stars = row.querySelectorAll('.star');
+      function paint(value) {
+        stars.forEach((s) => s.classList.toggle('filled', parseInt(s.dataset.value, 10) <= value));
+      }
+      paint(formData[key]);
+      stars.forEach((s) => {
+        s.addEventListener('click', () => {
+          formData[key] = parseInt(s.dataset.value, 10);
+          paint(formData[key]);
+        });
+      });
+    });
+  }
+
+  function wireChipGroup(container, selector, formKey, multi) {
+    const chips = container.querySelectorAll(selector);
+    chips.forEach((chip) => {
+      if (multi ? formData[formKey].includes(chip.dataset.value) : formData[formKey] === chip.dataset.value) {
+        chip.classList.add('selected');
+      }
+      chip.addEventListener('click', () => {
+        if (multi) {
+          const idx = formData[formKey].indexOf(chip.dataset.value);
+          if (idx === -1) { formData[formKey].push(chip.dataset.value); chip.classList.add('selected'); }
+          else { formData[formKey].splice(idx, 1); chip.classList.remove('selected'); }
+        } else {
+          formData[formKey] = chip.dataset.value;
+          chips.forEach((c) => c.classList.remove('selected'));
+          chip.classList.add('selected');
+        }
+      });
+    });
+  }
+
+  function renderFormStep1() {
+    swapContent(`
+      <div class="df-steps"><span class="df-step-dot active"></span><span class="df-step-dot"></span><span class="df-step-dot"></span></div>
+      <h2 class="dark-title">${business.name}</h2>
+      <p class="dark-note">Bu bilgiler herkese açık değildir — doğrudan ve özel olarak işletme yönetimine iletilecektir.</p>
+      <div class="df-section"><div class="df-label">Genel puanınız</div>${starRow('overall', true)}</div>
+      <div class="df-section">
+        <div class="df-subrow"><span class="df-sublabel">Yiyecek</span>${starRow('food')}</div>
+        <div class="df-subrow"><span class="df-sublabel">Hizmet</span>${starRow('service')}</div>
+        <div class="df-subrow" style="margin-bottom:0"><span class="df-sublabel">Atmosfer</span>${starRow('ambience')}</div>
+      </div>
+      <div class="df-section">
+        <div class="df-label">Deneyiminiz</div>
+        <textarea class="df-textarea" id="dfComment" placeholder="Kişisel deneyiminizi burada paylaşın">${formData.comment}</textarea>
+        <button class="df-photo-btn" id="dfPhotoBtn">📷 Fotoğraf ekle</button>
+        <input type="file" id="dfPhotoInput" accept="image/*" style="display:none">
+        <div id="dfPhotoPreviewWrap"></div>
+      </div>
+      <div class="df-section" style="margin-bottom:8px">
+        <div class="df-label">Ne yediniz?</div>
+        <div class="chip-group">
+          <button class="chip" data-value="Kahvaltı">Kahvaltı</button>
+          <button class="chip" data-value="Geç kahvaltı">Geç kahvaltı</button>
+          <button class="chip" data-value="Öğle yemeği">Öğle yemeği</button>
+          <button class="chip" data-value="Akşam yemeği">Akşam yemeği</button>
+          <button class="chip" data-value="Diğer">Diğer</button>
+        </div>
+      </div>
+      <div class="df-nav"><button class="df-btn-primary" id="dfNext1">İleri</button></div>
+    `, () => {
+      wireStars(cardContent);
+      wireChipGroup(cardContent, '.chip', 'meals', true);
+
+      document.getElementById('dfComment').addEventListener('input', (e) => { formData.comment = e.target.value; });
+
+      const photoInput = document.getElementById('dfPhotoInput');
+      document.getElementById('dfPhotoBtn').addEventListener('click', () => photoInput.click());
+      photoInput.addEventListener('change', () => {
+        const file = photoInput.files[0];
+        if (!file) return;
+        formData.photoFile = file;
+        const url = URL.createObjectURL(file);
+        document.getElementById('dfPhotoPreviewWrap').innerHTML = `<img class="df-photo-preview" src="${url}">`;
+      });
+
+      document.getElementById('dfNext1').addEventListener('click', renderFormStep2);
+    });
+  }
+
+  function renderFormStep2() {
+    swapContent(`
+      <div class="df-steps"><span class="df-step-dot"></span><span class="df-step-dot active"></span><span class="df-step-dot"></span></div>
+      <div class="df-section">
+        <div class="df-label">Kişi başı ne kadar harcadınız?</div>
+        <div class="chip-group">
+          <button class="chip" data-value="₺1-200">₺1-200</button>
+          <button class="chip" data-value="₺200-400">₺200-400</button>
+          <button class="chip" data-value="₺400-600">₺400-600</button>
+          <button class="chip" data-value="₺600-800">₺600-800</button>
+          <button class="chip" data-value="₺800-1.000">₺800-1.000</button>
+          <button class="chip" data-value="₺1.000-1.200">₺1.000-1.200</button>
+          <button class="chip" data-value="₺1.200-1.400">₺1.200-1.400</button>
+          <button class="chip" data-value="₺1.400-1.600">₺1.400-1.600</button>
+          <button class="chip" data-value="₺1.600-1.800">₺1.600-1.800</button>
+          <button class="chip" data-value="₺1.800-2.000">₺1.800-2.000</button>
+          <button class="chip" data-value="₺2.000+">₺2.000+</button>
+        </div>
+      </div>
+      <div class="df-section" style="margin-bottom:8px">
+        <div class="df-label">Gürültü seviyesini nasıl değerlendirirsiniz?</div>
+        <div class="chip-group">
+          <button class="chip" data-value="Çok sessiz">Çok sessiz</button>
+          <button class="chip" data-value="Sessiz, konuşması kolay">Sessiz, konuşması kolay</button>
+          <button class="chip" data-value="Orta düzeyde gürültülü">Orta düzeyde gürültülü</button>
+          <button class="chip" data-value="Gürültülü ancak konuşmak mümkün">Gürültülü ancak konuşmak mümkün</button>
+          <button class="chip" data-value="Çok gürültülü, duyulması zor">Çok gürültülü, duyulması zor</button>
+          <button class="chip" data-value="Emin değilim">Emin değilim</button>
+        </div>
+      </div>
+      <div class="df-nav">
+        <button class="df-btn-secondary" id="dfBack2">Geri</button>
+        <button class="df-btn-primary" id="dfNext2">İleri</button>
+      </div>
+    `, () => {
+      wireChipGroup(cardContent, '.chip-group:nth-of-type(1) .chip', 'price', false);
+      wireChipGroup(cardContent, '.chip-group:nth-of-type(2) .chip', 'noise', false);
+      document.getElementById('dfBack2').addEventListener('click', renderFormStep1);
+      document.getElementById('dfNext2').addEventListener('click', renderFormStep3);
+    });
+  }
+
+  function renderFormStep3() {
+    const accItems = [
+      { key: 'vejetaryen', label: 'Vejetaryen seçenekler', options: ['Var', 'Yok', 'Emin değilim'] },
+      { key: 'diyet', label: 'Diyet kısıtlamaları', options: ['Glutensiz seçenek var', 'Vegan seçenek var', 'Yok', 'Emin değilim'] },
+      { key: 'otopark', label: 'Otopark', options: ['Ücretsiz otopark var', 'Ücretli otopark var', 'Yok', 'Emin değilim'] },
+      { key: 'cocuk', label: 'Çocuklara uygunluk', options: ['Uygun', 'Uygun değil', 'Emin değilim'] },
+      { key: 'tekerlekli', label: 'Tekerlekli sandalyeye uygunluk', options: ['Uygun', 'Uygun değil', 'Emin değilim'] }
+    ];
+
+    const accHtml = accItems.map((item) => `
+      <div class="df-acc-item" data-key="${item.key}">
+        <button class="df-acc-head" type="button">
+          <span>${item.label}</span>
+          <span class="df-acc-chevron">▾</span>
+        </button>
+        <div class="df-acc-body">
+          <div class="chip-group">
+            ${item.options.map((o) => `<button class="chip" data-value="${o}">${o}</button>`).join('')}
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+    swapContent(`
+      <div class="df-steps"><span class="df-step-dot"></span><span class="df-step-dot"></span><span class="df-step-dot active"></span></div>
+      <div class="df-section" style="margin-bottom:12px">
+        <div class="df-label">Rezervasyon yapılmasını önerir misiniz?</div>
+        <div class="chip-group">
+          <button class="chip" data-value="Rezervasyon gerekir">Rezervasyon gerekir</button>
+          <button class="chip" data-value="Rezervasyon yaptırılması önerilir">Rezervasyon yaptırılması önerilir</button>
+          <button class="chip" data-value="Rezervasyon gerekmez">Rezervasyon gerekmez</button>
+          <button class="chip" data-value="Yalnızca rezervasyonsuz gidilir">Yalnızca rezervasyonsuz gidilir</button>
+          <button class="chip" data-value="Zamana/güne göre değişir">Zamana/güne göre değişir</button>
+          <button class="chip" data-value="Emin değilim">Emin değilim</button>
+        </div>
+      </div>
+      <div class="df-section" style="margin-bottom:8px">
+        <div class="df-label">Ayrıntı ekleyin (opsiyonel)</div>
+        <div class="df-accordion">${accHtml}</div>
+      </div>
+      <div class="df-nav">
+        <button class="df-btn-secondary" id="dfBack3">Geri</button>
+        <button class="df-btn-primary" id="dfSubmit">Gönder</button>
+      </div>
+    `, () => {
+      wireChipGroup(cardContent, '.df-section .chip-group .chip', 'reservation', false);
+
+      cardContent.querySelectorAll('.df-acc-head').forEach((head) => {
+        head.addEventListener('click', () => head.parentElement.classList.toggle('open'));
+      });
+      accItems.forEach((item) => {
+        const scope = cardContent.querySelector(`.df-acc-item[data-key="${item.key}"]`);
+        wireChipGroup(scope, '.chip', item.key, false);
+      });
+
+      document.getElementById('dfBack3').addEventListener('click', renderFormStep2);
+      document.getElementById('dfSubmit').addEventListener('click', submitDetailedForm);
+    });
+  }
+
+  async function submitDetailedForm() {
+    const btn = document.getElementById('dfSubmit');
+    btn.disabled = true;
+    btn.textContent = 'Gönderiliyor...';
+
+    const stars = (n) => n > 0 ? '★'.repeat(n) + '☆'.repeat(5 - n) : 'Belirtilmedi';
+    const lines = [
+      `😟 Detaylı geri bildirim — ${business.name}`,
+      '',
+      `Genel: ${stars(formData.overall)}`,
+      `Yiyecek: ${stars(formData.food)}`,
+      `Hizmet: ${stars(formData.service)}`,
+      `Atmosfer: ${stars(formData.ambience)}`,
+      '',
+      formData.comment ? `Yorum: ${formData.comment}` : '',
+      formData.meals.length ? `Ne yediniz: ${formData.meals.join(', ')}` : '',
+      formData.price ? `Kişi başı harcama: ${formData.price}` : '',
+      formData.noise ? `Gürültü: ${formData.noise}` : '',
+      formData.reservation ? `Rezervasyon önerisi: ${formData.reservation}` : '',
+      formData.vejetaryen ? `Vejetaryen seçenekler: ${formData.vejetaryen}` : '',
+      formData.diyet ? `Diyet kısıtlamaları: ${formData.diyet}` : '',
+      formData.otopark ? `Otopark: ${formData.otopark}` : '',
+      formData.cocuk ? `Çocuklara uygunluk: ${formData.cocuk}` : '',
+      formData.tekerlekli ? `Tekerlekli sandalyeye uygunluk: ${formData.tekerlekli}` : ''
+    ].filter(Boolean);
+
+    const text = lines.join('\n');
+
+    try {
+      if (business.telegramChatId) {
+        if (formData.photoFile) {
+          const fd = new FormData();
+          fd.append('chat_id', business.telegramChatId);
+          fd.append('caption', text);
+          fd.append('photo', formData.photoFile);
+          const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`, { method: 'POST', body: fd });
+          if (!res.ok) throw new Error('Gönderim başarısız');
+        } else {
+          const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: business.telegramChatId, text })
+          });
+          if (!res.ok) throw new Error('Gönderim başarısız');
+        }
+      }
+      renderManagerConfirmation();
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = 'Gönder';
+      alert('Gönderilemedi, lütfen tekrar deneyin.');
+    }
+  }
+
+  function renderManagerConfirmation() {
+    cardContent.parentElement.classList.remove('dark');
+    swapContent(`
+      <div class="status-block">
+        <div class="check-icon" style="background: rgba(61,116,238,0.12); color: var(--blue);">&#10003;</div>
+        <h2>İletildi!</h2>
+        <p>Talebiniz işletme yöneticisine ulaştı. En kısa sürede sizinle iletişime geçilecek.</p>
+      </div>
+    `);
+  }
+
+  function renderNotFound() {
+    document.title = "Geri Bildirim";
+    cardContent.innerHTML = `
+      <div class="status-block">
+        <div class="check-icon">!</div>
+        <h2>İşletme bulunamadı</h2>
+        <p>Bu bağlantı geçerli değil. Lütfen size verilen doğru geri bildirim linkini kullanın.</p>
+      </div>
+    `;
+  }
+
+  if (business) {
+    renderRating();
+  } else {
+    renderNotFound();
+  }
+</script>
+</body>
+</html>

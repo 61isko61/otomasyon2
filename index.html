@@ -180,9 +180,12 @@
     transition: opacity 0.2s ease;
   }
   .df-btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
-  .df-steps { display: flex; gap: 6px; justify-content: center; margin-bottom: 22px; }
-  .df-step-dot { width: 8px; height: 8px; border-radius: 50%; background: #3A3D45; }
-  .df-step-dot.active { background: var(--blue); }
+
+  .df-sticky-bar {
+    position: fixed; left: 0; right: 0; bottom: 0; background: #16181D; border-top: 1px solid #26282E;
+    padding: 14px 26px calc(14px + env(safe-area-inset-bottom)); z-index: 20;
+  }
+  .df-scroll-area { padding-bottom: 90px; }
 </style>
 </head>
 <body>
@@ -192,6 +195,7 @@
     </div>
     <p class="footer-text" id="brandFooter">Bu işletme <strong>Rovera</strong> kalite standartları ile analiz edilmektedir.</p>
   </div>
+  <div class="df-sticky-bar" id="dfStickyBar" style="display:none"></div>
 
 <script>
   /* ============================================================
@@ -259,7 +263,7 @@
           if (rating <= 3) {
             cardContent.parentElement.classList.add('dark');
             document.body.classList.add('fullbleed');
-            renderFormStep1();
+            renderDetailedForm();
           } else {
             window.location.href = business.googleReviewUrl;
           }
@@ -325,98 +329,7 @@
     });
   }
 
-  function renderFormStep1() {
-    swapContent(`
-      <div class="df-steps"><span class="df-step-dot active"></span><span class="df-step-dot"></span><span class="df-step-dot"></span></div>
-      <h2 class="dark-title">${business.name}</h2>
-      <p class="dark-note">Bu bilgiler herkese açık değildir — doğrudan ve özel olarak işletme yönetimine iletilecektir.</p>
-      <div class="df-section"><div class="df-label">Genel puanınız</div>${starRow('overall', true)}</div>
-      <div class="df-section">
-        <div class="df-subrow"><span class="df-sublabel">Yiyecek</span>${starRow('food')}</div>
-        <div class="df-subrow"><span class="df-sublabel">Hizmet</span>${starRow('service')}</div>
-        <div class="df-subrow" style="margin-bottom:0"><span class="df-sublabel">Atmosfer</span>${starRow('ambience')}</div>
-      </div>
-      <div class="df-section">
-        <div class="df-label">Deneyiminiz</div>
-        <textarea class="df-textarea" id="dfComment" placeholder="Kişisel deneyiminizi burada paylaşın">${formData.comment}</textarea>
-        <button class="df-photo-btn" id="dfPhotoBtn">📷 Fotoğraf ekle</button>
-        <input type="file" id="dfPhotoInput" accept="image/*" style="display:none">
-        <div id="dfPhotoPreviewWrap"></div>
-      </div>
-      <div class="df-section" style="margin-bottom:8px">
-        <div class="df-label">Ne yediniz?</div>
-        <div class="chip-group">
-          <button class="chip" data-value="Kahvaltı">Kahvaltı</button>
-          <button class="chip" data-value="Geç kahvaltı">Geç kahvaltı</button>
-          <button class="chip" data-value="Öğle yemeği">Öğle yemeği</button>
-          <button class="chip" data-value="Akşam yemeği">Akşam yemeği</button>
-          <button class="chip" data-value="Diğer">Diğer</button>
-        </div>
-      </div>
-      <div class="df-nav"><button class="df-btn-primary" id="dfNext1">İleri</button></div>
-    `, () => {
-      wireStars(cardContent);
-      wireChipGroup(cardContent, '.chip', 'meals', true);
-
-      document.getElementById('dfComment').addEventListener('input', (e) => { formData.comment = e.target.value; });
-
-      const photoInput = document.getElementById('dfPhotoInput');
-      document.getElementById('dfPhotoBtn').addEventListener('click', () => photoInput.click());
-      photoInput.addEventListener('change', () => {
-        const file = photoInput.files[0];
-        if (!file) return;
-        formData.photoFile = file;
-        const url = URL.createObjectURL(file);
-        document.getElementById('dfPhotoPreviewWrap').innerHTML = `<img class="df-photo-preview" src="${url}">`;
-      });
-
-      document.getElementById('dfNext1').addEventListener('click', renderFormStep2);
-    });
-  }
-
-  function renderFormStep2() {
-    swapContent(`
-      <div class="df-steps"><span class="df-step-dot"></span><span class="df-step-dot active"></span><span class="df-step-dot"></span></div>
-      <div class="df-section">
-        <div class="df-label">Kişi başı ne kadar harcadınız?</div>
-        <div class="chip-group">
-          <button class="chip" data-value="₺1-200">₺1-200</button>
-          <button class="chip" data-value="₺200-400">₺200-400</button>
-          <button class="chip" data-value="₺400-600">₺400-600</button>
-          <button class="chip" data-value="₺600-800">₺600-800</button>
-          <button class="chip" data-value="₺800-1.000">₺800-1.000</button>
-          <button class="chip" data-value="₺1.000-1.200">₺1.000-1.200</button>
-          <button class="chip" data-value="₺1.200-1.400">₺1.200-1.400</button>
-          <button class="chip" data-value="₺1.400-1.600">₺1.400-1.600</button>
-          <button class="chip" data-value="₺1.600-1.800">₺1.600-1.800</button>
-          <button class="chip" data-value="₺1.800-2.000">₺1.800-2.000</button>
-          <button class="chip" data-value="₺2.000+">₺2.000+</button>
-        </div>
-      </div>
-      <div class="df-section" style="margin-bottom:8px">
-        <div class="df-label">Gürültü seviyesini nasıl değerlendirirsiniz?</div>
-        <div class="chip-group">
-          <button class="chip" data-value="Çok sessiz">Çok sessiz</button>
-          <button class="chip" data-value="Sessiz, konuşması kolay">Sessiz, konuşması kolay</button>
-          <button class="chip" data-value="Orta düzeyde gürültülü">Orta düzeyde gürültülü</button>
-          <button class="chip" data-value="Gürültülü ancak konuşmak mümkün">Gürültülü ancak konuşmak mümkün</button>
-          <button class="chip" data-value="Çok gürültülü, duyulması zor">Çok gürültülü, duyulması zor</button>
-          <button class="chip" data-value="Emin değilim">Emin değilim</button>
-        </div>
-      </div>
-      <div class="df-nav">
-        <button class="df-btn-secondary" id="dfBack2">Geri</button>
-        <button class="df-btn-primary" id="dfNext2">İleri</button>
-      </div>
-    `, () => {
-      wireChipGroup(cardContent, '.chip-group:nth-of-type(1) .chip', 'price', false);
-      wireChipGroup(cardContent, '.chip-group:nth-of-type(2) .chip', 'noise', false);
-      document.getElementById('dfBack2').addEventListener('click', renderFormStep1);
-      document.getElementById('dfNext2').addEventListener('click', renderFormStep3);
-    });
-  }
-
-  function renderFormStep3() {
+  function renderDetailedForm() {
     const accItems = [
       { key: 'vejetaryen', label: 'Vejetaryen seçenekler', options: ['Var', 'Yok', 'Emin değilim'] },
       { key: 'diyet', label: 'Diyet kısıtlamaları', options: ['Glutensiz seçenek var', 'Vegan seçenek var', 'Yok', 'Emin değilim'] },
@@ -439,41 +352,115 @@
       </div>
     `).join('');
 
-    swapContent(`
-      <div class="df-steps"><span class="df-step-dot"></span><span class="df-step-dot"></span><span class="df-step-dot active"></span></div>
-      <div class="df-section" style="margin-bottom:12px">
-        <div class="df-label">Rezervasyon yapılmasını önerir misiniz?</div>
-        <div class="chip-group">
-          <button class="chip" data-value="Rezervasyon gerekir">Rezervasyon gerekir</button>
-          <button class="chip" data-value="Rezervasyon yaptırılması önerilir">Rezervasyon yaptırılması önerilir</button>
-          <button class="chip" data-value="Rezervasyon gerekmez">Rezervasyon gerekmez</button>
-          <button class="chip" data-value="Yalnızca rezervasyonsuz gidilir">Yalnızca rezervasyonsuz gidilir</button>
-          <button class="chip" data-value="Zamana/güne göre değişir">Zamana/güne göre değişir</button>
-          <button class="chip" data-value="Emin değilim">Emin değilim</button>
+    cardContent.innerHTML = `
+      <div class="df-scroll-area">
+        <h2 class="dark-title">${business.name}</h2>
+        <p class="dark-note">Bu bilgiler herkese açık değildir — doğrudan ve özel olarak işletme yönetimine iletilecektir.</p>
+
+        <div class="df-section"><div class="df-label">Genel puanınız</div>${starRow('overall', true)}</div>
+        <div class="df-section">
+          <div class="df-subrow"><span class="df-sublabel">Yiyecek</span>${starRow('food')}</div>
+          <div class="df-subrow"><span class="df-sublabel">Hizmet</span>${starRow('service')}</div>
+          <div class="df-subrow" style="margin-bottom:0"><span class="df-sublabel">Atmosfer</span>${starRow('ambience')}</div>
+        </div>
+
+        <div class="df-section">
+          <div class="df-label">Deneyiminiz</div>
+          <textarea class="df-textarea" id="dfComment" placeholder="Kişisel deneyiminizi burada paylaşın">${formData.comment}</textarea>
+          <button class="df-photo-btn" id="dfPhotoBtn">📷 Fotoğraf ekle</button>
+          <input type="file" id="dfPhotoInput" accept="image/*" style="display:none">
+          <div id="dfPhotoPreviewWrap"></div>
+        </div>
+
+        <div class="df-section">
+          <div class="df-label">Ne yediniz?</div>
+          <div class="chip-group" id="dfMeals">
+            <button class="chip" data-value="Kahvaltı">Kahvaltı</button>
+            <button class="chip" data-value="Geç kahvaltı">Geç kahvaltı</button>
+            <button class="chip" data-value="Öğle yemeği">Öğle yemeği</button>
+            <button class="chip" data-value="Akşam yemeği">Akşam yemeği</button>
+            <button class="chip" data-value="Diğer">Diğer</button>
+          </div>
+        </div>
+
+        <div class="df-section">
+          <div class="df-label">Kişi başı ne kadar harcadınız?</div>
+          <div class="chip-group" id="dfPrice">
+            <button class="chip" data-value="₺1-200">₺1-200</button>
+            <button class="chip" data-value="₺200-400">₺200-400</button>
+            <button class="chip" data-value="₺400-600">₺400-600</button>
+            <button class="chip" data-value="₺600-800">₺600-800</button>
+            <button class="chip" data-value="₺800-1.000">₺800-1.000</button>
+            <button class="chip" data-value="₺1.000-1.200">₺1.000-1.200</button>
+            <button class="chip" data-value="₺1.200-1.400">₺1.200-1.400</button>
+            <button class="chip" data-value="₺1.400-1.600">₺1.400-1.600</button>
+            <button class="chip" data-value="₺1.600-1.800">₺1.600-1.800</button>
+            <button class="chip" data-value="₺1.800-2.000">₺1.800-2.000</button>
+            <button class="chip" data-value="₺2.000+">₺2.000+</button>
+          </div>
+        </div>
+
+        <div class="df-section">
+          <div class="df-label">Gürültü seviyesini nasıl değerlendirirsiniz?</div>
+          <div class="chip-group" id="dfNoise">
+            <button class="chip" data-value="Çok sessiz">Çok sessiz</button>
+            <button class="chip" data-value="Sessiz, konuşması kolay">Sessiz, konuşması kolay</button>
+            <button class="chip" data-value="Orta düzeyde gürültülü">Orta düzeyde gürültülü</button>
+            <button class="chip" data-value="Gürültülü ancak konuşmak mümkün">Gürültülü ancak konuşmak mümkün</button>
+            <button class="chip" data-value="Çok gürültülü, duyulması zor">Çok gürültülü, duyulması zor</button>
+            <button class="chip" data-value="Emin değilim">Emin değilim</button>
+          </div>
+        </div>
+
+        <div class="df-section">
+          <div class="df-label">Rezervasyon yapılmasını önerir misiniz?</div>
+          <div class="chip-group" id="dfReservation">
+            <button class="chip" data-value="Rezervasyon gerekir">Rezervasyon gerekir</button>
+            <button class="chip" data-value="Rezervasyon yaptırılması önerilir">Rezervasyon yaptırılması önerilir</button>
+            <button class="chip" data-value="Rezervasyon gerekmez">Rezervasyon gerekmez</button>
+            <button class="chip" data-value="Yalnızca rezervasyonsuz gidilir">Yalnızca rezervasyonsuz gidilir</button>
+            <button class="chip" data-value="Zamana/güne göre değişir">Zamana/güne göre değişir</button>
+            <button class="chip" data-value="Emin değilim">Emin değilim</button>
+          </div>
+        </div>
+
+        <div class="df-section" style="margin-bottom:8px">
+          <div class="df-label">Ayrıntı ekleyin (opsiyonel)</div>
+          <div class="df-accordion">${accHtml}</div>
         </div>
       </div>
-      <div class="df-section" style="margin-bottom:8px">
-        <div class="df-label">Ayrıntı ekleyin (opsiyonel)</div>
-        <div class="df-accordion">${accHtml}</div>
-      </div>
-      <div class="df-nav">
-        <button class="df-btn-secondary" id="dfBack3">Geri</button>
-        <button class="df-btn-primary" id="dfSubmit">Gönder</button>
-      </div>
-    `, () => {
-      wireChipGroup(cardContent, '.df-section .chip-group .chip', 'reservation', false);
+    `;
 
-      cardContent.querySelectorAll('.df-acc-head').forEach((head) => {
-        head.addEventListener('click', () => head.parentElement.classList.toggle('open'));
-      });
-      accItems.forEach((item) => {
-        const scope = cardContent.querySelector(`.df-acc-item[data-key="${item.key}"]`);
-        wireChipGroup(scope, '.chip', item.key, false);
-      });
+    document.getElementById('dfStickyBar').style.display = 'block';
+    document.getElementById('dfStickyBar').innerHTML = `<button class="df-btn-primary" id="dfSubmit" style="width:100%">Gönder</button>`;
 
-      document.getElementById('dfBack3').addEventListener('click', renderFormStep2);
-      document.getElementById('dfSubmit').addEventListener('click', submitDetailedForm);
+    wireStars(cardContent);
+    wireChipGroup(cardContent, '#dfMeals .chip', 'meals', true);
+    wireChipGroup(cardContent, '#dfPrice .chip', 'price', false);
+    wireChipGroup(cardContent, '#dfNoise .chip', 'noise', false);
+    wireChipGroup(cardContent, '#dfReservation .chip', 'reservation', false);
+
+    document.getElementById('dfComment').addEventListener('input', (e) => { formData.comment = e.target.value; });
+
+    const photoInput = document.getElementById('dfPhotoInput');
+    document.getElementById('dfPhotoBtn').addEventListener('click', () => photoInput.click());
+    photoInput.addEventListener('change', () => {
+      const file = photoInput.files[0];
+      if (!file) return;
+      formData.photoFile = file;
+      const url = URL.createObjectURL(file);
+      document.getElementById('dfPhotoPreviewWrap').innerHTML = `<img class="df-photo-preview" src="${url}">`;
     });
+
+    cardContent.querySelectorAll('.df-acc-head').forEach((head) => {
+      head.addEventListener('click', () => head.parentElement.classList.toggle('open'));
+    });
+    accItems.forEach((item) => {
+      const scope = cardContent.querySelector(`.df-acc-item[data-key="${item.key}"]`);
+      wireChipGroup(scope, '.chip', item.key, false);
+    });
+
+    document.getElementById('dfSubmit').addEventListener('click', submitDetailedForm);
   }
 
   async function submitDetailedForm() {
@@ -533,6 +520,7 @@
   function renderManagerConfirmation() {
     cardContent.parentElement.classList.remove('dark');
     document.body.classList.remove('fullbleed');
+    document.getElementById('dfStickyBar').style.display = 'none';
     swapContent(`
       <div class="status-block">
         <div class="check-icon" style="background: rgba(61,116,238,0.12); color: var(--blue);">&#10003;</div>
